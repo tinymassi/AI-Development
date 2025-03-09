@@ -1,3 +1,11 @@
+# ****************************************************************************************************************************** #
+# This AI model is trained on a dataset that details whether or not a customer is likely to 'Churn' (y-parameter T or F) based   #
+# on a number of factors (x-parameters). Even through adding regularization as well as changing batch and epoch size, the model  #
+# still suffers from overfitting as well as major spiking in validation loss, as well as sub par accuracy. This could be due to  #
+# a lack of training data.                                                                                                       #
+# This code was developed by Nicholas Renotte on YouTube and modified by me                                                      #
+# ****************************************************************************************************************************** #
+
 # For importing data
 import pandas as pd                                                                 # python data manipulation library
 from sklearn.model_selection import train_test_split
