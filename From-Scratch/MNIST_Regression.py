@@ -1,11 +1,17 @@
 import numpy as np
 
 class MNIST_Regression:
+
     def __init__(self):
+        print('place holder')
 
-    
     def forward_propogration(self):
+        for i in range(len(self.activation_layers)):
+            self.weighted_sums[i] = np.add(np.dot(self.weights[i], self.activation_layers[i]), self.biases[i])
+            self.activation_layers[i + 1] = self.sigmoid(self.weighted_sums[i])
 
+    def sigmoid(self, Z):
+        print('place holder')
     
     dim_pixels = 28*28                         # w * h of the input pixel grid
     m = 10000                                  # m = number of training examples
@@ -27,19 +33,19 @@ class MNIST_Regression:
     A_2 = np.empty(layer_2_size, m)
     A_3 = np.empty(layer_3_size, m)
 
-    layers = [A_0, A_1, A_2, A_3]
+    activation_layers = [A_0, A_1, A_2, A_3]
 
     # Create matrices for set of weights between layers in the Neural Network
-    W_1 = np.empty(layer_1_size, layer_0_size)
-    W_2 = np.empty(layer_2_size, layer_1_size)
-    W_3 = np.empty(layer_3_size, layer_2_size)
+    W_1 = np.random.uniform(-0.5, 0.5, size = (layer_1_size, layer_0_size))
+    W_2 = np.random.uniform(-0.5, 0.5, size = (layer_2_size, layer_1_size))
+    W_3 = np.random.uniform(-0.5, 0.5, size = (layer_3_size, layer_2_size))
 
     weights = [W_1, W_2, W_3]
 
     # Create matrices for set of biases between layers in the Neural Network
-    B_1 = np.empty(layer_1_size, m)
-    B_2 = np.empty(layer_2_size, m)
-    B_3 = np.empty(layer_3_size, m)
+    B_1 = np.zeros(layer_1_size, m)
+    B_2 = np.zeros(layer_2_size, m)
+    B_3 = np.zeros(layer_3_size, m)
 
     biases = [B_1, B_2, B_3]
 
