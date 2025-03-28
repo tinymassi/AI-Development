@@ -33,6 +33,7 @@ class MNIST_Regression:
         for i in range(epochs):
             activations, weights, biases, weighted_sums = self.forward_propogration(X, m, activations, weights, biases, weighted_sums)
             weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y, m, activations, weights, weighted_sum_changes, weight_nudges, bias_nudges)
+            weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
 
 
 
@@ -104,7 +105,7 @@ class MNIST_Regression:
 
 
     def load_data(self):
-        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (row 1 = expected digit, row 2 -> 785 is eac pixel))
+        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (row 1 = expected digit, row 2 -> 785 is each pixel))
         data = np.array(datafile)
         np.random.shuffle(data)
         self.samples, self.dim_pixels = data.shape    # TODO: DIM PIXEL ISSUE???
@@ -119,10 +120,6 @@ class MNIST_Regression:
         X_training = training_data[1 : self.dim_pixels]
         
         return X_validation, Y_validation, X_training, Y_training
-
-
-
-    # TODO: CREATE FUNCTION THAT CAN TURN THE DATA IN Y TO 0'S & 1'S
 
 
 
@@ -145,13 +142,13 @@ class MNIST_Regression:
 
 
     def back_propogration(self, Y, samples, activation_layers, weights, weighted_sum_changes, weight_nudges, bias_nudges):
-        # TODO PUT THE ONE HOT FUNCTION CALL HERE TO MODIFY Y
+        self.one_hot(Y)
         i = len(weighted_sum_changes) - 1
         while i >= 0:
             if i == len(weighted_sum_changes) - 1:
                 weighted_sum_changes[i] = activation_layers[len(activation_layers) - 1] - Y
             else:
-                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1], )# WHAT IS G PRIME OF Z??
+                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1], )# TODO: WHAT IS G PRIME OF Z??
 
             weight_nudges[i] = (1 / samples) * np.dot(weighted_sum_changes[i], activation_layers[i].T)
             bias_nudges[i]= (1 / samples) * np.sum(weighted_sum_changes, axis = 1)
@@ -162,11 +159,20 @@ class MNIST_Regression:
 
 
 
-    def update_parameters(self):
-        for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] - (self.learning_ratio * self.weight_nudges[i])
-            self.biases[i] = self.biases[i] - (self.learning_ratio * self.bias_nudges[i])
-        return
+    # take the matrix of correct answers and change each column element to be zero except for the correct answer which will be 1
+    def one_hot(self, Y):
+        one_hot_Y = np.zeros((Y.size(), Y.max() + 1))            # fill one_hot_Y with zeros and change its size to Y.size = m rows and Y.max() + 1= 9 + 1 = 10 columns 
+        one_hot_Y[np.arange(Y.size), Y] = 1                      # index through one_hot_Y by accessing row np.arange(Y.size) which is an array from 0 - m, and column Y which is a value from 0 - 9
+        one_hot_Y = one_hot_Y.T                                  # transpose one_hot_Y to make it compatible with matrix subtraction
+        return one_hot_Y 
+
+
+
+    def update_parameters(self, weights, weight_nudges, biases, bias_nudges):
+        for i in range(len(weights)):
+            weights[i] = weights[i] - (MNIST_Regression.learning_ratio * weight_nudges[i])
+            biases[i] = biases[i] - (MNIST_Regression.learning_ratio * bias_nudges[i])
+        return weights, biases
 
     
 
