@@ -5,13 +5,14 @@ class MNIST_Regression:
     def __init__(self):
         print('place holder')
 
+
     # Forward progpagation calculates all the weighted sums for each activation layer
     def forward_propogration(self):
         for i in range(len(self.activation_layers)):
             self.weighted_sums[i] = np.dot(self.weights[i], self.activation_layers[i]) + self.biases[i]
-            self.activation_layers[i + 1] = self.sigmoid(self.weighted_sums[i])
-        
+            self.activation_layers[i + 1] = self.sigmoid(self.weighted_sums[i])        
         return
+
 
     # Sigmoid function squishes all the weighted sums between 0 - 1 for compatibility
     # with neuron activation layers
@@ -28,11 +29,20 @@ class MNIST_Regression:
                 self.weighted_sum_changes[i] = np.dot(self.weights[i + 1].T, self.weighted_sum_changes[i + 1], )# WHAT IS G PRIME OF Z??
 
             self.weight_nudges[i] = (1 / self.m) * np.dot(self.weighted_sum_changes[i], self.activation_layers[i].T)
-            self.bias_nudges[i]= (1 / self.m) * np.sum(self.weighted_sum_changes, axis=1)
+            self.bias_nudges[i]= (1 / self.m) * np.sum(self.weighted_sum_changes, axis = 1)
+        return
+
+
+    def update_parameters(self):
+        for i in range(len(self.weights)):
+            self.weights[i] = self.weights[i] - (self.learning_ratio * self.weight_nudges[i])
+            self.biases[i] = self.biases[i] - (self.learning_ratio * self.bias_nudges[i])
+        return
 
 
     dim_pixels = 28*28                         # w * h of the input pixel grid
     m = 10000                                  # m = number of training samples
+    learning_ratio = 0
 
     layer_0_size = dim_pixels                  # input layer has 784 neurons (one for each pixel)
     layer_1_size = 16                          # hidden layer 1 has 16 neurons
