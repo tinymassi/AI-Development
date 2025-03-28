@@ -5,6 +5,18 @@ import matplotlib as plt
 class MNIST_Regression:
 
     def __init__(self):
+        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (row 1 = expected digit, row 2 -> 785 is eac pixel))
+        data = np.array(datafile)
+        np.random.shuffle(data)
+        self.samples, self.dim_pixels = data.shape
+
+        # set up validation data to be samples 0 - 1000
+        self.validation_data = data[0: 1000].T
+
+        self.Y = self.validation_data[0]
+        
+        self.training_data = data[1000 : self.samples]
+        
         print('place holder')
 
 
@@ -42,8 +54,8 @@ class MNIST_Regression:
         return
 
 
-    dim_pixels = 28*28                         # w * h of the input pixel grid
-    m = 10000                                  # m = number of training samples
+    dim_pixels = 0                             # w * h of the input pixel grid
+    samples = 0                                # m = number of training samples
     learning_ratio = 0.01                      # ratio for the rate at which the model learns
 
     layer_0_size = dim_pixels                  # input layer has 784 neurons (one for each pixel)
@@ -52,16 +64,16 @@ class MNIST_Regression:
     layer_3_size = 10                          # output layer has 10 neurons (one for each predicted digit 1 - 9)
 
     # Matrix that contains dim_pixel row and m columns
-    T = np.empty(dim_pixels, m)
+    T = np.empty(dim_pixels, samples)
 
     # Matrix that contains correct answer choice from training data for comparison to predicted output
-    Y = np.empty(layer_3_size, m)
+    Y = np.empty(layer_3_size, samples)
 
     # Create matrices for each layer of the Neural Network
-    A_0 = np.empty(layer_0_size, m)
-    A_1 = np.empty(layer_1_size, m)
-    A_2 = np.empty(layer_2_size, m)
-    A_3 = np.empty(layer_3_size, m)
+    A_0 = np.empty(layer_0_size, samples)
+    A_1 = np.empty(layer_1_size, samples)
+    A_2 = np.empty(layer_2_size, samples)
+    A_3 = np.empty(layer_3_size, samples)
 
     # List of all the layers
     activation_layers = [A_0, A_1, A_2, A_3]
@@ -83,9 +95,9 @@ class MNIST_Regression:
     weight_nudges = [dW_1, dW_2, dW_3]
 
     # Create matrices for set of biases between layers in the Neural Network
-    B_1 = np.zeros(layer_1_size, m)
-    B_2 = np.zeros(layer_2_size, m)
-    B_3 = np.zeros(layer_3_size, m)
+    B_1 = np.zeros(layer_1_size, samples)
+    B_2 = np.zeros(layer_2_size, samples)
+    B_3 = np.zeros(layer_3_size, samples)
 
     # List of all the biases
     biases = [B_1, B_2, B_3]
@@ -99,17 +111,17 @@ class MNIST_Regression:
     bias_nudges = [dB_1, dB_2, dB_3]
 
     # Create matrices for weighter sum between layers in the Neural Network
-    Z_1 = np.empty(layer_1_size, m)
-    Z_2 = np.empty(layer_2_size, m)
-    Z_3 = np.empty(layer_3_size, m)
+    Z_1 = np.empty(layer_1_size, samples)
+    Z_2 = np.empty(layer_2_size, samples)
+    Z_3 = np.empty(layer_3_size, samples)
 
     # List of all the weighted sums
     weighted_sums = [Z_1, Z_2, Z_3]
 
     # Create matrices that contain the change in the weighted sums for dW and dB computation
-    dZ_1 = np.empty(layer_1_size, m)
-    dZ_2 = np.empty(layer_2_size, m)
-    dZ_3 = np.empty(layer_3_size, m)
+    dZ_1 = np.empty(layer_1_size, samples)
+    dZ_2 = np.empty(layer_2_size, samples)
+    dZ_3 = np.empty(layer_3_size, samples)
 
     # Create list of all the changes in the weighted sums
     weighted_sum_changes = [dZ_1, dZ_2, dZ_3]
