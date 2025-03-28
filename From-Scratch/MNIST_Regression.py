@@ -105,19 +105,20 @@ class MNIST_Regression:
 
 
     def load_data(self):
-        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (row 1 = expected digit, row 2 -> 785 is each pixel))
+        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (col 1 = expected digit, col2 -> 785 is each pixel))
         data = np.array(datafile)
         np.random.shuffle(data)
-        self.samples, self.dim_pixels = data.shape    # TODO: DIM PIXEL ISSUE???
+        m, n = data.shape
 
         # set up validation data to be samples 0 - 1000
         validation_data = data[0 : 1000].T
         Y_validation = validation_data[0]
-        X_validation = validation_data[1 : self.dim_pixels]
+        X_validation = validation_data[1 : n]
 
-        training_data = data[1000 : self.samples].T
+        # set up training data to be sameples 0 - last training example
+        training_data = data[1000 : m].T
         Y_training = training_data[0]
-        X_training = training_data[1 : self.dim_pixels]
+        X_training = training_data[1 : n]
         
         return X_validation, Y_validation, X_training, Y_training
 
@@ -157,7 +158,8 @@ class MNIST_Regression:
 
         return weighted_sum_changes, weight_nudges, bias_nudges
 
-
+    def deriv_sigmoid(self, Z):
+        return self.simoid(Z) * (1 - self.sigmoid(Z))
 
     # take the matrix of correct answers and change each column element to be zero except for the correct answer which will be 1
     def one_hot(self, Y):
