@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import matplotlib as plt
 
 class MNIST_Regression:
 
@@ -42,7 +44,7 @@ class MNIST_Regression:
 
     dim_pixels = 28*28                         # w * h of the input pixel grid
     m = 10000                                  # m = number of training samples
-    learning_ratio = 0
+    learning_ratio = 0.01                      # ratio for the rate at which the model learns
 
     layer_0_size = dim_pixels                  # input layer has 784 neurons (one for each pixel)
     layer_1_size = 16                          # hidden layer 1 has 16 neurons
