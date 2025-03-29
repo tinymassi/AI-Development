@@ -11,7 +11,7 @@ class MNIST_Regression:
 
     learning_ratio = 0.01                      # ratio for the rate at which the model learns
 
-    datafile_name = 'MNIST_Digits.zip'         # name of the input training and validation data file
+    datafile_name = 'train.csv.zip'           # name of the input training and validation data file
 
     def __init__(self):
 
@@ -33,46 +33,47 @@ class MNIST_Regression:
         weight_nudges, bias_nudges, weighted_sum_changes = self.init_nudges(m)
 
         for i in range(epochs):
-            activations, weights, biases, weighted_sums = self.forward_propogration(X, m, activations, weights, biases, weighted_sums)
-            weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y, m, activations, weights, weighted_sum_changes, weight_nudges, bias_nudges)
+            activations, weights, biases, weighted_sums = self.forward_propogration(X, activations, weights, weighted_sums, biases)
+            weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y, m, activations, weights, weighted_sums, weighted_sum_changes, weight_nudges, bias_nudges)
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
 
             if i % 20 == 0:
-                print(f"Iteration {i}")
-                print(f"Accuracy, {self.get_accuracy(self.get_predictions(activations[len(activations) - 1], Y))}")
+                print(f"Iteration: {i}")
+                print(f"Accuracy: {self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y)}")
+                print("")
                 
 
 
     def init_neural_net (self, m):    
         # Create matrices for each layer of the Neural Network
-        A_0 = np.empty(MNIST_Regression.layer_0_size, m)
-        A_1 = np.empty(MNIST_Regression.layer_1_size, m)
-        A_2 = np.empty(MNIST_Regression.layer_2_size, m)
-        A_3 = np.empty(MNIST_Regression.layer_3_size, m)
+        A_0 = np.empty((MNIST_Regression.layer_0_size, m))
+        A_1 = np.empty((MNIST_Regression.layer_1_size, m))
+        A_2 = np.empty((MNIST_Regression.layer_2_size, m))
+        A_3 = np.empty((MNIST_Regression.layer_3_size, m))
 
         # List of all the activation layers
         activations = [A_0, A_1, A_2, A_3]
 
         # Create matrices for set of weights between layers in the Neural Network
-        W_1 = np.random.uniform(-0.5, 0.5, size = (MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size))
-        W_2 = np.random.uniform(-0.5, 0.5, size = (MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size))
-        W_3 = np.random.uniform(-0.5, 0.5, size = (MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size))
+        W_1 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size))
+        W_2 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size))
+        W_3 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size))
 
         # List of all the weights
         weights = [W_1, W_2, W_3]
     
         # Create matrices for set of biases between layers in the Neural Network
-        B_1 = np.zeros(MNIST_Regression.layer_1_size, m)
-        B_2 = np.zeros(MNIST_Regression.layer_2_size, m)
-        B_3 = np.zeros(MNIST_Regression.layer_3_size, m)
+        B_1 = np.zeros((MNIST_Regression.layer_1_size, m))
+        B_2 = np.zeros((MNIST_Regression.layer_2_size, m))
+        B_3 = np.zeros((MNIST_Regression.layer_3_size, m))
 
         # List of all the biases
         biases = [B_1, B_2, B_3]
 
         # Create matrices for weighter sum between layers in the Neural Network
-        Z_1 = np.empty(MNIST_Regression.layer_1_size, m)
-        Z_2 = np.empty(MNIST_Regression.layer_2_size, m)
-        Z_3 = np.empty(MNIST_Regression.layer_3_size, m)
+        Z_1 = np.empty((MNIST_Regression.layer_1_size, m))
+        Z_2 = np.empty((MNIST_Regression.layer_2_size, m))
+        Z_3 = np.empty((MNIST_Regression.layer_3_size, m))
 
         # List of all the weighted sums
         weighted_sums = [Z_1, Z_2, Z_3]
@@ -83,25 +84,25 @@ class MNIST_Regression:
 
     def init_nudges(self, m):
         # Create matrices that contain nudges to add to weights between layers
-        dW_1 = np.empty(MNIST_Regression.layer_1_size, MNIST_Regression.layer_2_size)
-        dW_2 = np.empty(MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size)
-        dW_3 = np.empty(MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size)
+        dW_1 = np.empty((MNIST_Regression.layer_1_size, MNIST_Regression.layer_2_size))
+        dW_2 = np.empty((MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size))
+        dW_3 = np.empty((MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size))
 
         # List of all the weight nudge matrices
         weight_nudges = [dW_1, dW_2, dW_3]
 
         # Create matrices that contain nudges to add to biases between layers
-        dB_1 = np.empty(MNIST_Regression.layer_1_size, 1)
-        dB_2 = np.empty(MNIST_Regression.layer_2_size, 1)
-        dB_3 = np.empty(MNIST_Regression.layer_3_size, 1)
+        dB_1 = np.empty((MNIST_Regression.layer_1_size, 1))
+        dB_2 = np.empty((MNIST_Regression.layer_2_size, 1))
+        dB_3 = np.empty((MNIST_Regression.layer_3_size, 1))
 
         # List of all the bias nudge matrices
         bias_nudges = [dB_1, dB_2, dB_3]
 
         # Create matrices that contain the change in the weighted sums for dW and dB computation
-        dZ_1 = np.empty(MNIST_Regression.layer_1_size, m)
-        dZ_2 = np.empty(MNIST_Regression.layer_2_size, m)
-        dZ_3 = np.empty(MNIST_Regression.layer_3_size, m)
+        dZ_1 = np.empty((MNIST_Regression.layer_1_size, m))
+        dZ_2 = np.empty((MNIST_Regression.layer_2_size, m))
+        dZ_3 = np.empty((MNIST_Regression.layer_3_size, m))
 
         # Create list of all the changes in the weighted sums
         weighted_sum_changes = [dZ_1, dZ_2, dZ_3]
@@ -133,7 +134,8 @@ class MNIST_Regression:
     # Forward progpagation calculates all the weighted sums for each activation layer
     def forward_propogration(self, X, activation_layers, weights, weighted_sums, biases):
         activation_layers[0] = X
-        for i in range(len(activation_layers)):
+        
+        for i in range(len(weighted_sums)):
             weighted_sums[i] = weights[i].dot(activation_layers[i]) + biases[i]
             activation_layers[i + 1] = self.sigmoid(weighted_sums[i])    
         
@@ -144,21 +146,22 @@ class MNIST_Regression:
     # Sigmoid function squishes all the weighted sums between 0 - 1 for compatibility
     # with neuron activation layers
     def sigmoid(self, Z):
-        return 1/(1 + np.exp(-self.Z))
+        Z = np.clip(Z, -500, 500)     # to prevent overflow
+        return 1/(1 + np.exp(-Z))
 
 
 
-    def back_propogration(self, Y, samples, activation_layers, weights, weighted_sum_changes, weight_nudges, bias_nudges):
+    def back_propogration(self, Y, samples, activation_layers, weights, weighted_sums, weighted_sum_changes, weight_nudges, bias_nudges):
         self.one_hot(Y)
         i = len(weighted_sum_changes) - 1
         while i >= 0:
             if i == len(weighted_sum_changes) - 1:
                 weighted_sum_changes[i] = activation_layers[len(activation_layers) - 1] - Y
             else:
-                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1], self.deriv_sigmoid(Z))# TODO: WHAT IS G PRIME OF Z??
+                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1]) * self.deriv_sigmoid(weighted_sums[i])# TODO: WHAT IS G PRIME OF Z??
 
             weight_nudges[i] = (1 / samples) * np.dot(weighted_sum_changes[i], activation_layers[i].T)
-            bias_nudges[i]= (1 / samples) * np.sum(weighted_sum_changes, axis = 1)
+            bias_nudges[i]= (1 / samples) * np.sum(weighted_sum_changes[i], axis = 1).reshape(-1, 1)
 
             i -= 1
 
@@ -167,13 +170,14 @@ class MNIST_Regression:
     
 
     def deriv_sigmoid(self, Z):
-        return (self.sigmoid(Z) * (1 - self.sigmoid(Z)))
+        sigmoid = self.sigmoid(Z)
+        return (sigmoid * (1 - sigmoid))
 
     
 
     # take the matrix of correct answers and change each column element to be zero except for the correct answer which will be 1
     def one_hot(self, Y):
-        one_hot_Y = np.zeros((Y.size(), Y.max() + 1))            # fill one_hot_Y with zeros and change its size to Y.size = m rows and Y.max() + 1= 9 + 1 = 10 columns 
+        one_hot_Y = np.zeros((Y.size, Y.max() + 1))            # fill one_hot_Y with zeros and change its size to Y.size = m rows and Y.max() + 1= 9 + 1 = 10 columns 
         one_hot_Y[np.arange(Y.size), Y] = 1                      # index through one_hot_Y by accessing row np.arange(Y.size) which is an array from 0 - m, and column Y which is a value from 0 - 9, and set it to 1
         one_hot_Y = one_hot_Y.T                                  # transpose one_hot_Y to make it compatible with matrix subtraction
         return one_hot_Y 
@@ -187,6 +191,7 @@ class MNIST_Regression:
         return weights, biases
 
     
+
     def get_accuracy(self, predictions, Y):
         print(predictions, Y)
         return np.sum(predictions == Y) / Y.size
