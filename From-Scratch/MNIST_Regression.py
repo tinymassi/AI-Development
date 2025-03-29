@@ -11,6 +11,8 @@ class MNIST_Regression:
 
     learning_ratio = 0.01                      # ratio for the rate at which the model learns
 
+    datafile_name = 'MNIST_Digits.zip'         # name of the input training and validation data file
+
     def __init__(self):
 
         X_validation, Y_validation, X_training, Y_training = self.load_data()
@@ -35,6 +37,10 @@ class MNIST_Regression:
             weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y, m, activations, weights, weighted_sum_changes, weight_nudges, bias_nudges)
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
 
+            if i % 20 == 0:
+                print(f"Iteration {i}")
+                print(f"Accuracy, {self.get_accuracy(self.get_predictions(activations[len(activations) - 1], Y))}")
+                
 
 
     def init_neural_net (self, m):    
@@ -105,7 +111,7 @@ class MNIST_Regression:
 
 
     def load_data(self):
-        datafile = pd.read_csv('MNIST_Digits.zip')   # load in training data (each training sample is a row that is 785 columns long (col 1 = expected digit, col2 -> 785 is each pixel))
+        datafile = pd.read_csv(MNIST_Regression.datafile_name)   # load in training data (each training sample is a row that is 785 columns long (col 1 = expected digit, col2 -> 785 is each pixel))
         data = np.array(datafile)
         np.random.shuffle(data)
         m, n = data.shape
@@ -149,7 +155,7 @@ class MNIST_Regression:
             if i == len(weighted_sum_changes) - 1:
                 weighted_sum_changes[i] = activation_layers[len(activation_layers) - 1] - Y
             else:
-                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1], )# TODO: WHAT IS G PRIME OF Z??
+                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1], self.deriv_sigmoid(Z))# TODO: WHAT IS G PRIME OF Z??
 
             weight_nudges[i] = (1 / samples) * np.dot(weighted_sum_changes[i], activation_layers[i].T)
             bias_nudges[i]= (1 / samples) * np.sum(weighted_sum_changes, axis = 1)
@@ -158,13 +164,17 @@ class MNIST_Regression:
 
         return weighted_sum_changes, weight_nudges, bias_nudges
 
+    
+
     def deriv_sigmoid(self, Z):
-        return self.simoid(Z) * (1 - self.sigmoid(Z))
+        return (self.sigmoid(Z) * (1 - self.sigmoid(Z)))
+
+    
 
     # take the matrix of correct answers and change each column element to be zero except for the correct answer which will be 1
     def one_hot(self, Y):
         one_hot_Y = np.zeros((Y.size(), Y.max() + 1))            # fill one_hot_Y with zeros and change its size to Y.size = m rows and Y.max() + 1= 9 + 1 = 10 columns 
-        one_hot_Y[np.arange(Y.size), Y] = 1                      # index through one_hot_Y by accessing row np.arange(Y.size) which is an array from 0 - m, and column Y which is a value from 0 - 9
+        one_hot_Y[np.arange(Y.size), Y] = 1                      # index through one_hot_Y by accessing row np.arange(Y.size) which is an array from 0 - m, and column Y which is a value from 0 - 9, and set it to 1
         one_hot_Y = one_hot_Y.T                                  # transpose one_hot_Y to make it compatible with matrix subtraction
         return one_hot_Y 
 
@@ -177,4 +187,10 @@ class MNIST_Regression:
         return weights, biases
 
     
+    def get_accuracy(self, predictions, Y):
+        print(predictions, Y)
+        return np.sum(predictions == Y) / Y.size
 
+
+    def get_predictions(self, output_layer):
+        return np.argmax(output_layer, 0)
