@@ -13,6 +13,8 @@ class MNIST_Regression:
 
     datafile_name = 'train.csv.zip'           # name of the input training and validation data file
 
+    num_epochs = 500
+
     def __init__(self):
 
         X_validation, Y_validation, X_training, Y_training = self.load_data()
@@ -20,7 +22,7 @@ class MNIST_Regression:
         MNIST_Regression.layer_0_size = X_validation.shape[0]
 
         # TRAINING
-        self.gradient_descent(X_training, Y_training, 500)
+        self.gradient_descent(X_training, Y_training, MNIST_Regression.num_epochs)
 
         # VALIDATION
         # self.gradient_descent(X_validation, Y_validation, 500)
@@ -36,11 +38,13 @@ class MNIST_Regression:
             activations, weights, biases, weighted_sums = self.forward_propogration(X, activations, weights, weighted_sums, biases)
             weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y, m, activations, weights, weighted_sums, weighted_sum_changes, weight_nudges, bias_nudges)
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
+            
 
             if i % 20 == 0:
                 print(f"Iteration: {i}")
                 print(f"Accuracy: {self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y)}")
                 print("")
+                print(activations[3])
                 
 
 
@@ -55,9 +59,9 @@ class MNIST_Regression:
         activations = [A_0, A_1, A_2, A_3]
 
         # Create matrices for set of weights between layers in the Neural Network
-        W_1 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size))
-        W_2 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size))
-        W_3 = np.random.uniform(-0.5, 0.5, (MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size))
+        W_1 = np.random.randn(MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size)
+        W_2 = np.random.randn(MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size)
+        W_3 = np.random.randn(MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size)
 
         # List of all the weights
         weights = [W_1, W_2, W_3]
@@ -121,11 +125,16 @@ class MNIST_Regression:
         validation_data = data[0 : 1000].T
         Y_validation = validation_data[0]
         X_validation = validation_data[1 : n]
+        # X_validation = X_validation / 255.
 
         # set up training data to be sameples 0 - last training example
         training_data = data[1000 : m].T
         Y_training = training_data[0]
         X_training = training_data[1 : n]
+        # X_training = X_training / 255.
+
+        # print('X_validation:', X_validation)
+        # print('X_training: ', X_training)
         
         return X_validation, Y_validation, X_training, Y_training
 
@@ -146,7 +155,7 @@ class MNIST_Regression:
     # Sigmoid function squishes all the weighted sums between 0 - 1 for compatibility
     # with neuron activation layers
     def sigmoid(self, Z):
-        Z = np.clip(Z, -500, 500)     # to prevent overflow
+        Z = np.clip(Z, -600, 600)     # to prevent overflow
         return 1/(1 + np.exp(-Z))
 
 
@@ -158,12 +167,16 @@ class MNIST_Regression:
             if i == len(weighted_sum_changes) - 1:
                 weighted_sum_changes[i] = activation_layers[len(activation_layers) - 1] - Y
             else:
-                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1]) * self.deriv_sigmoid(weighted_sums[i])# TODO: WHAT IS G PRIME OF Z??
+                weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1]) * self.deriv_sigmoid(weighted_sums[i])
 
             weight_nudges[i] = (1 / samples) * np.dot(weighted_sum_changes[i], activation_layers[i].T)
             bias_nudges[i]= (1 / samples) * np.sum(weighted_sum_changes[i], axis = 1).reshape(-1, 1)
 
             i -= 1
+
+        # print(f"Bias Nudge dim 1: {bias_nudges[0].shape}")
+        # print(f"Bias Nudge dim 2: {bias_nudges[1].shape}")
+        # print(f"Bias Nudge dim 3: {bias_nudges[2].shape}")
 
         return weighted_sum_changes, weight_nudges, bias_nudges
 
@@ -195,6 +208,7 @@ class MNIST_Regression:
     def get_accuracy(self, predictions, Y):
         print(predictions, Y)
         return np.sum(predictions == Y) / Y.size
+
 
 
     def get_predictions(self, output_layer):
