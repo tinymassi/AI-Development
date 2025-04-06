@@ -112,7 +112,7 @@ class MNIST_Regression:
 
 
 
-    #  Initializes the sizes of the activation, weight, bias, and weighted sum matrices
+    # Initializes the sizes of the activation, weight, bias, and weighted sum matrices
     def init_neural_net (self, m):
         # Create matrices for each layer of the Neural Network
         A_0 = np.zeros((MNIST_Regression.layer_0_size, m))
@@ -223,6 +223,7 @@ class MNIST_Regression:
         return activation_layers, weighted_sums
 
 
+
     # Converts raw data into probabilities 
     def softmax(Z):
         A = np.exp(Z) / sum(np.exp(Z))
@@ -272,7 +273,6 @@ class MNIST_Regression:
             i -= 1
 
         return weighted_sum_changes, weight_nudges, bias_nudges
-
 
     
 
