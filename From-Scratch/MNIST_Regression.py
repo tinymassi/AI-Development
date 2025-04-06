@@ -18,7 +18,7 @@ class MNIST_Regression:
 
     datafile_name = 'train.csv.zip'            # name of the input training and validation data file
 
-    num_epochs = 50
+    num_epochs = 1000
 
 
 
@@ -61,7 +61,7 @@ class MNIST_Regression:
 
             # I think its problematic to have the weights, weighted_sums, and biases change during validation??
             validation_activations, validation_weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
-            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(validation_activations[len(validation_activations) - 1]), Y_val)
+            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_val)
             validation_accuracy = validation_accuracy * 100 
 
 
@@ -70,7 +70,7 @@ class MNIST_Regression:
             validation_accuracy_scores.append(validation_accuracy)
 
 
-        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes)
+        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations)
 
 
 
@@ -256,34 +256,72 @@ class MNIST_Regression:
         return np.argmax(output_layer, 0)
 
 
-    
-    def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs):
-        fig1, ax = plt.subplots(2, 1)
+    # This function plots relevant data at the end of training such as
+    # accuracy improvements over time, final accuracy scores, and visualizations
+    # of the neural networks correct and incorrect predictions
+    def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs, X_val, Y_val, validation_activations):
+        fig1, ax = plt.subplots(2, 2, figsize = (12, 8))
 
         # Plot the training and validation accuracy comparison graphs
-        ax[0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy')
-        ax[0].plot(epochs, validation_accuracy_scores, label = 'Validation Accuracy')
-        ax[0].set_ylim(0, 100)
-        ax[0].set_xlim(0, MNIST_Regression.num_epochs)
-        ax[0].xaxis.set_major_locator(MultipleLocator(100))
-        ax[0].yaxis.set_major_locator(MultipleLocator(10))
-        ax[0].set_title('Neural Net Accuracy')
-        ax[0].set_xlabel('Epochs')
-        ax[0].set_ylabel('Accuracy')
-        ax[0].legend()
+        ax[0 , 0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy', c = 'b')
+        ax[0 , 0].plot(epochs, validation_accuracy_scores, label = 'Validation Accuracy', c = 'r')
+        ax[0 , 0].set_ylim(0, 100)
+        ax[0 , 0].set_xlim(0, MNIST_Regression.num_epochs)
+        ax[0 , 0].xaxis.set_major_locator(MultipleLocator(100))
+        ax[0 , 0].yaxis.set_major_locator(MultipleLocator(10))
+        ax[0 , 0].set_title('Neural Net Accuracy')
+        ax[0 , 0].set_xlabel('Epochs')
+        ax[0 , 0].set_ylabel('Accuracy')
+        ax[0 , 0].legend()
 
         # Plot the final accuracy values for the training and validation processeses
         categories = ['Validation', 'Training']
         data = [validation_accuracy_scores[-1], training_accuracy_scores[-1]]
-        ax[1].bar(categories, data)
-        ax[1].set_ylim(0, 100)
-        ax[1].yaxis.set_major_locator(MultipleLocator(10))
-        ax[1].set_title('Validation vs Training Accuracy')
-        ax[1].set_ylabel('Final Accuracy Scores')
+        ax[1, 0].bar(categories, data)
+        ax[1, 0].set_ylim(0, 100)
+        ax[1, 0].yaxis.set_major_locator(MultipleLocator(10))
+        ax[1, 0].set_title('Validation vs Training Accuracy')
+        ax[1, 0].set_ylabel('Final Accuracy Scores')
+
+
+        # Plot a visualization of a correct prediction
+        predictions = self.get_predictions(validation_activations[-1])
+        correct_prediction = 0
+
+        for i in range(len(predictions)):
+            if predictions[i] == Y_val[i]:
+                correct_prediction = i
+                break
+
+        current_image = X_val[:, correct_prediction, None]
+        prediction = predictions[correct_prediction]
+        label = Y_val[correct_prediction]
+        current_image = current_image.reshape((28, 28)) * 255
+
+        ax[0, 1].set_title('Correct Prediction Example:', color='green')
+        ax[0, 1].imshow(current_image, cmap = 'gray', interpolation='nearest')
+        ax[0, 1].text(0, 1, f'Actual Number: {label}', color='white', fontsize=12)
+        ax[0, 1].text(0, 2.5, f'Predicted Number: {prediction}', color='green', fontsize=12)
+
+        
+        # Plot a visualization of an incorrect prediction
+        incorrect_prediction = 0
+        for i in range(len(predictions)):
+            if predictions[i] != Y_val[i]:
+                incorrect_prediction = i
+                break
+
+        current_image = X_val[:, incorrect_prediction, None]
+        prediction = predictions[incorrect_prediction]
+        label = Y_val[incorrect_prediction]
+        current_image = current_image.reshape((28, 28)) * 255
+        
+        ax[1, 1].set_title('Incorrect Prediction Example:', color='red')
+        ax[1, 1].imshow(current_image, cmap = 'gray', interpolation='nearest')
+        ax[1, 1].text(0, 1, f'Actual Number: {label}', color='white', fontsize=12)
+        ax[1, 1].text(0, 2.5, f'Predicted Number: {prediction}', color='red', fontsize=12)
 
         fig1.tight_layout()
-        
-
 
         plt.show()
 
