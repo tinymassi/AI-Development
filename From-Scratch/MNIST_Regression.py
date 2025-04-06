@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from matplotlib.ticker import MultipleLocator
 
 class MNIST_Regression:
@@ -19,7 +18,9 @@ class MNIST_Regression:
 
     datafile_name = 'train.csv.zip'            # name of the input training and validation data file
 
-    num_epochs = 100
+    num_epochs = 50
+
+
 
     def __init__(self):
 
@@ -43,7 +44,7 @@ class MNIST_Regression:
     
 
         for i in range(epochs + 1):
-            activations, weights, biases, weighted_sums = self.forward_propogration(X_train, activations, weights, weighted_sums, biases)
+            activations, weighted_sums = self.forward_propogration(X_train, activations, weights, weighted_sums, biases)
             weighted_sum_changes, weight_nudges, bias_nudges = self.back_propogration(Y_train, m, activations, weights, weighted_sums, weighted_sum_changes, weight_nudges, bias_nudges)
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
             
@@ -58,19 +59,22 @@ class MNIST_Regression:
                 print("")
 
 
-            activations, weights, biases, weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
-            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_val)
+            # I think its problematic to have the weights, weighted_sums, and biases change during validation??
+            validation_activations, validation_weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
+            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(validation_activations[len(validation_activations) - 1]), Y_val)
             validation_accuracy = validation_accuracy * 100 
+
 
             indexes.append(i)
             training_accuracy_scores.append(training_accuracy)
             validation_accuracy_scores.append(validation_accuracy)
 
-        
 
         self.plot(validation_accuracy_scores, training_accuracy_scores, indexes)
 
-    def init_neural_net (self, m):    
+
+
+    def init_neural_net (self, m):
         # Create matrices for each layer of the Neural Network
         A_0 = np.zeros((MNIST_Regression.layer_0_size, m))
         A_1 = np.zeros((MNIST_Regression.layer_1_size, m))
@@ -174,13 +178,14 @@ class MNIST_Regression:
             else:
                 activation_layers[i + 1] = self.sigmoid(weighted_sums[i])
 
-        return activation_layers, weights, biases, weighted_sums
+        return activation_layers, weighted_sums
 
 
 
     def softmax(Z):
         A = np.exp(Z) / sum(np.exp(Z))
         return A
+
 
 
     # Sigmoid function squishes all the weighted sums between 0 - 1 for compatibility
@@ -190,12 +195,15 @@ class MNIST_Regression:
         return 1/(1 + np.exp(-Z))
 
 
+
     def ReLU(self, Z):
         return np.maximum(Z, 0)
 
 
+
     def ReLU_deriv(self, Z):
         return Z > 0
+
 
 
     def back_propogration(self, Y, samples, activation_layers, weights, weighted_sums, weighted_sum_changes, weight_nudges, bias_nudges):
@@ -250,8 +258,9 @@ class MNIST_Regression:
 
     
     def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs):
-        fig, ax = plt.subplots(2, 1)
+        fig1, ax = plt.subplots(2, 1)
 
+        # Plot the training and validation accuracy comparison graphs
         ax[0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy')
         ax[0].plot(epochs, validation_accuracy_scores, label = 'Validation Accuracy')
         ax[0].set_ylim(0, 100)
@@ -263,6 +272,7 @@ class MNIST_Regression:
         ax[0].set_ylabel('Accuracy')
         ax[0].legend()
 
+        # Plot the final accuracy values for the training and validation processeses
         categories = ['Validation', 'Training']
         data = [validation_accuracy_scores[-1], training_accuracy_scores[-1]]
         ax[1].bar(categories, data)
@@ -271,9 +281,9 @@ class MNIST_Regression:
         ax[1].set_title('Validation vs Training Accuracy')
         ax[1].set_ylabel('Final Accuracy Scores')
 
-
-
-        fig.tight_layout()
+        fig1.tight_layout()
+        
 
 
         plt.show()
+
