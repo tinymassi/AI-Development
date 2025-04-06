@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.ticker import MultipleLocator
 
 class MNIST_Regression:
 
@@ -12,13 +13,13 @@ class MNIST_Regression:
 
     learning_ratio = 0.5                       # ratio for the rate at which the model learns
 
-    validation_end = 20000                     # how many data examples will be used for validation (0 -> validation_end)
+    validation_end = 1000                      # how many data examples will be used for validation (0 -> validation_end)
 
-    training_start = 20000                     # starting point for data samples used for training (training_start -> m)
+    training_start = 1000                      # starting point for data samples used for training (training_start -> m)
 
     datafile_name = 'train.csv.zip'            # name of the input training and validation data file
 
-    num_epochs = 20
+    num_epochs = 100
 
     def __init__(self):
 
@@ -26,7 +27,7 @@ class MNIST_Regression:
 
         MNIST_Regression.layer_0_size = X_validation.shape[0]
 
-        # TRAINING
+        # TRAINING AND VALIDATION
         self.gradient_descent(X_validation, Y_validation, X_training, Y_training, MNIST_Regression.num_epochs)
 
 
@@ -38,9 +39,8 @@ class MNIST_Regression:
 
         indexes = []
         training_accuracy_scores = []
-        # predictions = []
-        # labels = []
-        # current_image = []
+        validation_accuracy_scores = []
+    
 
         for i in range(epochs + 1):
             activations, weights, biases, weighted_sums = self.forward_propogration(X_train, activations, weights, weighted_sums, biases)
@@ -48,23 +48,27 @@ class MNIST_Regression:
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
             
 
-            training_accuracy = (self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_train) * 100)
-            print(f"Epoch: {i}")
-            print(f"Training Accuracy: {training_accuracy:.2f}%")
-            print("")
+            training_predictions, training_actual, training_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_train)
+            training_accuracy = training_accuracy * 100
+            if i % 10 == 0:
+                print(f"EPOCH: {i}")
+                print(f'NEURAL NET PREDICTED NUMBERS: {training_predictions}')
+                print(f'ACTUAL NUMBERS:               {training_actual}')
+                print(f"Training Accuracy: {training_accuracy:.2f}%")
+                print("")
 
-            # prediction, label, current_image = self.test_prediction(self, i, X, Y, weights, biases)
+
+            activations, weights, biases, weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
+            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_val)
+            validation_accuracy = validation_accuracy * 100 
 
             indexes.append(i)
             training_accuracy_scores.append(training_accuracy)
+            validation_accuracy_scores.append(validation_accuracy)
 
         
-        activations, weights, biases, weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
-        validation_accuracy = (self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_val) * 100)
-        print(f"Validation Accuracy: {validation_accuracy}")
-        
 
-        self.plot(validation_accuracy, training_accuracy, training_accuracy_scores, indexes)
+        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes)
 
     def init_neural_net (self, m):    
         # Create matrices for each layer of the Neural Network
@@ -139,19 +143,19 @@ class MNIST_Regression:
         np.random.shuffle(data)
         m, n = data.shape
 
-        # set up validation data to be samples 0 - 1000
+        # set up validation data to be samples 0 - validation end
         validation_data = data[0 : MNIST_Regression.validation_end].T
         Y_validation = validation_data[0]
         X_validation = validation_data[1 : n]
         X_validation = X_validation / 255.
-        print("Validation Data Loaded...")
+        print("Validation Data Loaded.")
 
-        # set up training data to be sameples 0 - last training example
+        # set up training data to be sameples training start - last training example
         training_data = data[MNIST_Regression.training_start : m].T
         Y_training = training_data[0]
         X_training = training_data[1 : n]
         X_training = X_training / 255.
-        print("Training Data Loaded...")
+        print("Training Data Loaded.")
         print()
         
         return X_validation, Y_validation, X_training, Y_training
@@ -236,9 +240,7 @@ class MNIST_Regression:
     
 
     def get_accuracy(self, predictions, Y):
-        print(f'PREDICTED NUMBERS: {predictions[0 : 30]}')
-        print(f'EXPECTED NUMBERS:  {Y[0 : 30]}')
-        return np.sum(predictions == Y) / Y.size
+        return predictions[0 : 30], Y[0 : 30], np.sum(predictions == Y) / Y.size
 
 
 
@@ -247,77 +249,31 @@ class MNIST_Regression:
 
 
     
-    def plot(self, validation_accuracy, training_accuracy, accuracy_scores, epochs):
+    def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs):
         fig, ax = plt.subplots(2, 1)
 
-        ax[0].plot(epochs, accuracy_scores)
+        ax[0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy')
+        ax[0].plot(epochs, validation_accuracy_scores, label = 'Validation Accuracy')
         ax[0].set_ylim(0, 100)
         ax[0].set_xlim(0, MNIST_Regression.num_epochs)
-        ax[0].set_title('Neural Net Training Accuracy')
+        ax[0].xaxis.set_major_locator(MultipleLocator(100))
+        ax[0].yaxis.set_major_locator(MultipleLocator(10))
+        ax[0].set_title('Neural Net Accuracy')
         ax[0].set_xlabel('Epochs')
-        ax[0].set_ylabel('Training Accuracy')
+        ax[0].set_ylabel('Accuracy')
+        ax[0].legend()
 
         categories = ['Validation', 'Training']
-        data = [validation_accuracy, training_accuracy]
+        data = [validation_accuracy_scores[-1], training_accuracy_scores[-1]]
         ax[1].bar(categories, data)
         ax[1].set_ylim(0, 100)
+        ax[1].yaxis.set_major_locator(MultipleLocator(10))
         ax[1].set_title('Validation vs Training Accuracy')
         ax[1].set_ylabel('Final Accuracy Scores')
-        # define your x and y arrays to be plotted
-        # plots = [(t,y1), (t,y2), (t,y3)]
+
+
 
         fig.tight_layout()
 
-        # # now the real code :) 
-        # curr_pos = 0
-
-        # ax.cla()
-        # ax.plot(plots[curr_pos][0], plots[curr_pos][1])
-        # fig.canvas.draw()
-
-        # fig = plt.figure()
-        # fig.canvas.mpl_connect('key_press_event', self.key_event(plots))
-        # ax = fig.add_subplot(111)
-        # ax.plot(t,y1)
-        # plt.show()
-
-        # ani = FuncAnimation 
 
         plt.show()
-
-
-
-    # def key_event(e, plots):
-    #     global curr_pos
-
-    #     if e.key == "right":
-    #         curr_pos = curr_pos + 1
-    #     elif e.key == "left":
-    #         curr_pos = curr_pos - 1
-    #     else:
-    #         return
-    #     curr_pos = curr_pos % len(plots)
-
-
-
-    # def make_predictions(self, activation_layers, X, weights, biases):
-    #     _, _, _, A2 = self.forward_propogration(weights, biases)
-    #     predictions = self.get_predictions(A2)
-    #     return predictions
-
-
-
-    # def test_prediction(self, index, activation_layers, X_train, Y_train, weights, biases):
-    #     current_image = X_train[:, index, None]
-    #     prediction = self.make_predictions(activation_layers, X_train[:, index, None], weights, biases)
-    #     label = Y_train[index]
-
-    #     print("Prediction: ", prediction)
-    #     print("Label: ", label)
-        
-    #     current_image = current_image.reshape((28, 28)) * 255
-    #     plt.gray()
-    #     plt.imshow(current_image, interpolation='nearest')
-    #     plt.show()
-
-    #     return prediction, label, current_image
