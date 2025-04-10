@@ -108,7 +108,7 @@ class MNIST_Regression:
             validation_accuracy_scores.append(validation_accuracy)
 
 
-        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations)
+        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations, m)
 
 
 
@@ -307,8 +307,10 @@ class MNIST_Regression:
 
 
     # Plots relevant data at the end of training such as accuracy improvements over time, final accuracy scores, and visualizations of the neural networks correct and incorrect predictions
-    def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs, X_val, Y_val, validation_activations):
+    def plot(self, validation_accuracy_scores, training_accuracy_scores, epochs, X_val, Y_val, validation_activations, m):
+        # Create a plt plot that is a 2 x 2 graph layout of size 12 x 8
         fig1, ax = plt.subplots(2, 2, figsize = (12, 8))
+
 
         # Plot the training and validation accuracy comparison graphs
         ax[0 , 0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy', c = 'b')
@@ -320,7 +322,11 @@ class MNIST_Regression:
         ax[0 , 0].set_title('Neural Network Accuracy:')
         ax[0 , 0].set_xlabel('Epochs')
         ax[0 , 0].set_ylabel('Accuracy')
+        ax[0 , 0].text(0, 12, f'Neurons / Layer: L1: {MNIST_Regression.layer_0_size}, L2: {MNIST_Regression.layer_1_size}, L3: {MNIST_Regression.layer_2_size}, L4: {MNIST_Regression.layer_3_size} ', fontsize = 8)
+        ax[0 , 0].text(0, 7, f'Learning Ratio: {MNIST_Regression.learning_ratio}', fontsize = 8)
+        ax[0 , 0].text(0, 2, (f'Val Data Size: {MNIST_Regression.validation_end}, Train Data Size: {m - MNIST_Regression.training_start}'), fontsize = 8)
         ax[0 , 0].legend()
+
 
         # Plot the final accuracy values for the training and validation processeses
         categories = ['Validation', 'Training']
