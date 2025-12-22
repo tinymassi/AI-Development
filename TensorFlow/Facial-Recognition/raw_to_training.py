@@ -10,7 +10,7 @@ PATH = '/home/massimo/Github/AI-Development/TensorFlow/Facial-Recognition/raw_da
 std_size = (300, 300)
 
 # how pixelated the image is
-pixelate_lvl = 2
+pixelate_lvl = 3
 
 # squish the image based on its size and piexlate level
 squish_size = (std_size[0] // pixelate_lvl, std_size[1] // pixelate_lvl)
@@ -47,6 +47,8 @@ for filename in os.listdir(PATH + 'not_massimo/'):
 
     i += 1
 
+print("Non-Massimo images loaded.")
+print('\n')
 
 # how many images are there that ARE massimo?
 imgs_yes_massi = []
@@ -73,7 +75,8 @@ for filename in os.listdir(PATH + 'massimo/'):
 
     i += 1
 
-
+print("Massimo images loaded.")
+print('\n')
 
 # get the step to traverse each pixel in the m x n image
 step = std_size[0] // width

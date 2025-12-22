@@ -34,8 +34,8 @@ class MNIST_Regression:
 
     # Neural network neuron count in each layer layer_0 should always = 0, layer_3 should always = 10. Only change layer_1 and layer_2
     layer_0_size = 0
-    layer_1_size = 30
-    layer_2_size = 30
+    layer_1_size = 20
+    layer_2_size = 20
     layer_3_size = 10
 
     # Ratio for the rate at which the model learns
@@ -51,7 +51,7 @@ class MNIST_Regression:
     datafile_name = 'train.csv.zip'
 
     # Number of times the training data will pass through the Neural Network
-    num_epochs = 1000
+    num_epochs = 8000
 
 
 
@@ -90,8 +90,8 @@ class MNIST_Regression:
 
             training_predictions, training_actual, training_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_train)
             training_accuracy = training_accuracy * 100
-            if i % 10 == 0:
-                print(f"EPOCH: {i}")
+            if i % 1 == 0:
+                print(f"EPOCH: {i} / {self.num_epochs}")
                 print(f'NEURAL NET PREDICTED NUMBERS: {training_predictions}')
                 print(f'ACTUAL NUMBERS:               {training_actual}')
                 print(f"Training Accuracy: {training_accuracy:.2f}%")
@@ -322,9 +322,9 @@ class MNIST_Regression:
         ax[0 , 0].set_title('Neural Network Accuracy:')
         ax[0 , 0].set_xlabel('Epochs')
         ax[0 , 0].set_ylabel('Accuracy')
-        ax[0 , 0].text(0, 12, f'Neurons / Layer: L1: {MNIST_Regression.layer_0_size}, L2: {MNIST_Regression.layer_1_size}, L3: {MNIST_Regression.layer_2_size}, L4: {MNIST_Regression.layer_3_size} ', fontsize = 8)
-        ax[0 , 0].text(0, 7, f'Learning Ratio: {MNIST_Regression.learning_ratio}', fontsize = 8)
-        ax[0 , 0].text(0, 2, (f'Val Data Size: {MNIST_Regression.validation_end}, Train Data Size: {m - MNIST_Regression.training_start}'), fontsize = 8)
+        ax[0 , 0].text(0.001, 12, f'Neurons/Layer: L1: {MNIST_Regression.layer_0_size}, L2: {MNIST_Regression.layer_1_size}, L3: {MNIST_Regression.layer_2_size}, L4: {MNIST_Regression.layer_3_size} ', fontsize = 8)
+        ax[0 , 0].text(0.001, 7, f'Learning Ratio: {MNIST_Regression.learning_ratio}', fontsize = 8)
+        ax[0 , 0].text(0.001, 2, (f'Val Data Size: {MNIST_Regression.validation_end}, Train Data Size: {m - MNIST_Regression.training_start}'), fontsize = 8)
         ax[0 , 0].legend()
 
 
