@@ -32,40 +32,56 @@ class MNIST_Regression:
     # CUSTOMIZE NEURAL NETWORK SPECIFICATIONS HERE: #
     # ********************************************* #
 
-    # Neural network neuron count in each layer layer_0 should always = 0, layer_3 should always = 10. Only change layer_1 and layer_2
+    # Neural network neuron count in first and last layer layer_0 should always = 0, layer_3 should always = 10. 
     layer_0_size = 0
-    layer_1_size = 30
-    layer_2_size = 30
     layer_3_size = 10
-
-    # Ratio for the rate at which the model learns
-    learning_ratio = 0.5
-
-    # Data samples used for validation (0 -> validation_end)
-    validation_end = 10000
-
-    # Starting point for data samples used for training (training_start -> m)
-    training_start = 10000
 
     # Name of input file containing training and validation data
     datafile_name = 'train.csv.zip'
 
-    # Number of times the training data will pass through the Neural Network
-    num_epochs = 1000
-
-
 
     # Initializes the MNIST_Regression class
-    def __init__(self):
+    def __init__(self, learning_ratio=0.1, validation_end=10000, training_start=10000, hidden_layers=[18, 18], num_epochs=500, epoch_step=10):
+
+        self.datafile = pd.read_csv(self.datafile_name)
+        self.data = np.array(self.datafile)
+        m = self.data.shape[0]            
+
+        # ADD ASSERTS HERE
+        assert learning_ratio > 0, "Learning ratio must be non-negative. Pick a value between 0.1 - 3."
+        assert validation_end <= training_start, "Validation end value must be less than or equal to the start value for the training data."
+        assert validation_end > 0 and training_start > 0 and validation_end < m and training_start < m, f"Validation end value and training start value must be > 0 and less than the number of labeled images ({m})."
+        assert len(hidden_layers) == 2, "Number of hidden layers must be equal to 2 since this network is only designed with 2 hidden layers in mind."
+        assert hidden_layers[0] > 1 and hidden_layers[1] > 1, "Number of neurons in each hidden layer cannot be less than or equal to 1."
+        assert num_epochs > 0, "Number of training epochs must be greater than 0."
+        assert epoch_step > 0, "Epoch step must be greater than 0."
+
+        # Neural network neuron count in hidden layers. Only for changing layer_1 and layer_2
+        self.layer_1_size = hidden_layers[0]
+        self.layer_2_size = hidden_layers[1]
+        
+        # Ratio for the rate at which the model learns
+        self.num_epochs = num_epochs
+
+        # Data samples used for validation (0 -> validation_end)
+        self.validation_end = validation_end
+        # Starting point for data samples used for training (training_start -> m)
+        self.training_start = training_start
+
+        # Ratio for the rate at which the model learns
+        self.learning_ratio = learning_ratio
+
+        # Number of steps that are displayed between epochs
+        self.epoch_step = epoch_step
 
         # Load data into respective training and labeled data
         X_validation, Y_validation, X_training, Y_training = self.load_data()
 
         # Set the number of neurons in the first layer to the w x h pixel dimension of input img
-        MNIST_Regression.layer_0_size = X_validation.shape[0]
+        self.layer_0_size = X_validation.shape[0]
 
         # Run the neural network with the aquired training and label data
-        self.gradient_descent(X_validation, Y_validation, X_training, Y_training, MNIST_Regression.num_epochs)
+        self.gradient_descent(X_validation, Y_validation, X_training, Y_training, self.num_epochs)
 
 
 
@@ -90,8 +106,8 @@ class MNIST_Regression:
 
             training_predictions, training_actual, training_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_train)
             training_accuracy = training_accuracy * 100
-            if i % 10 == 0:
-                print(f"EPOCH: {i}")
+            if i % self.epoch_step == 0:
+                print(f"EPOCH: {i} / {self.num_epochs}")
                 print(f'NEURAL NET PREDICTED NUMBERS: {training_predictions}')
                 print(f'ACTUAL NUMBERS:               {training_actual}')
                 print(f"Training Accuracy: {training_accuracy:.2f}%")
@@ -107,7 +123,8 @@ class MNIST_Regression:
             training_accuracy_scores.append(training_accuracy)
             validation_accuracy_scores.append(validation_accuracy)
 
-
+        print("")    
+        print('Training and validation done!')
         self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations, m)
 
 
@@ -115,33 +132,33 @@ class MNIST_Regression:
     # Initializes the sizes of the activation, weight, bias, and weighted sum matrices
     def init_neural_net (self, m):
         # Create matrices for each layer of the Neural Network
-        A_0 = np.zeros((MNIST_Regression.layer_0_size, m))
-        A_1 = np.zeros((MNIST_Regression.layer_1_size, m))
-        A_2 = np.zeros((MNIST_Regression.layer_2_size, m))
-        A_3 = np.zeros((MNIST_Regression.layer_3_size, m))
+        A_0 = np.zeros((self.layer_0_size, m))
+        A_1 = np.zeros((self.layer_1_size, m))
+        A_2 = np.zeros((self.layer_2_size, m))
+        A_3 = np.zeros((self.layer_3_size, m))
 
         # List of all the activation layers
         activations = [A_0, A_1, A_2, A_3]
 
         # Create matrices for set of weights between layers in the Neural Network
-        W_1 = np.random.rand(MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size) - 0.5
-        W_2 = np.random.rand(MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size) - 0.5
-        W_3 = np.random.rand(MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size) - 0.5
+        W_1 = np.random.rand(self.layer_1_size, self.layer_0_size) - 0.5
+        W_2 = np.random.rand(self.layer_2_size, self.layer_1_size) - 0.5
+        W_3 = np.random.rand(self.layer_3_size, self.layer_2_size) - 0.5
     
         weights = [W_1, W_2, W_3]
     
         # Create matrices for set of biases between layers in the Neural Network
-        B_1 = np.zeros((MNIST_Regression.layer_1_size, 1))
-        B_2 = np.zeros((MNIST_Regression.layer_2_size, 1))
-        B_3 = np.zeros((MNIST_Regression.layer_3_size, 1))
+        B_1 = np.zeros((self.layer_1_size, 1))
+        B_2 = np.zeros((self.layer_2_size, 1))
+        B_3 = np.zeros((self.layer_3_size, 1))
 
         # List of all the biases
         biases = [B_1, B_2, B_3]
 
         # Create matrices for weighter sum between layers in the Neural Network
-        Z_1 = np.empty((MNIST_Regression.layer_1_size, m))
-        Z_2 = np.empty((MNIST_Regression.layer_2_size, m))
-        Z_3 = np.empty((MNIST_Regression.layer_3_size, m))
+        Z_1 = np.empty((self.layer_1_size, m))
+        Z_2 = np.empty((self.layer_2_size, m))
+        Z_3 = np.empty((self.layer_3_size, m))
 
         # List of all the weighted sums
         weighted_sums = [Z_1, Z_2, Z_3]
@@ -153,25 +170,25 @@ class MNIST_Regression:
     # Initializes the size of the weight, bias, and weighted sum nudge matrices for param updating
     def init_nudges(self, m):
         # Create matrices that contain nudges to add to weights between layers
-        dW_1 = np.empty((MNIST_Regression.layer_1_size, MNIST_Regression.layer_0_size))
-        dW_2 = np.empty((MNIST_Regression.layer_2_size, MNIST_Regression.layer_1_size))
-        dW_3 = np.empty((MNIST_Regression.layer_3_size, MNIST_Regression.layer_2_size))
+        dW_1 = np.empty((self.layer_1_size, self.layer_0_size))
+        dW_2 = np.empty((self.layer_2_size, self.layer_1_size))
+        dW_3 = np.empty((self.layer_3_size, self.layer_2_size))
 
         # List of all the weight nudge matrices
         weight_nudges = [dW_1, dW_2, dW_3]
 
         # Create matrices that contain nudges to add to biases between layers
-        dB_1 = np.empty((MNIST_Regression.layer_1_size, 1))
-        dB_2 = np.empty((MNIST_Regression.layer_2_size, 1))
-        dB_3 = np.empty((MNIST_Regression.layer_3_size, 1))
+        dB_1 = np.empty((self.layer_1_size, 1))
+        dB_2 = np.empty((self.layer_2_size, 1))
+        dB_3 = np.empty((self.layer_3_size, 1))
 
         # List of all the bias nudge matrices
         bias_nudges = [dB_1, dB_2, dB_3]
 
         # Create matrices that contain the change in the weighted sums for dW and dB computation
-        dZ_1 = np.empty((MNIST_Regression.layer_1_size, m))
-        dZ_2 = np.empty((MNIST_Regression.layer_2_size, m))
-        dZ_3 = np.empty((MNIST_Regression.layer_3_size, m))
+        dZ_1 = np.empty((self.layer_1_size, m))
+        dZ_2 = np.empty((self.layer_2_size, m))
+        dZ_3 = np.empty((self.layer_3_size, m))
 
         # Create list of all the changes in the weighted sums
         weighted_sum_changes = [dZ_1, dZ_2, dZ_3]
@@ -184,20 +201,19 @@ class MNIST_Regression:
     def load_data(self):
         # load in training data (each training sample is a row that is 785 column long where column 1 = labeled digit, column 2 -> column 785 = each pixel)
         print("Fetching Data...")
-        datafile = pd.read_csv(MNIST_Regression.datafile_name)
-        data = np.array(datafile)
-        np.random.shuffle(data)
-        m, n = data.shape
+        np.random.shuffle(self.data)
+        m, n = self.data.shape
+
 
         # set up validation data to be samples 0 - validation end
-        validation_data = data[0 : MNIST_Regression.validation_end].T
+        validation_data = self.data[0 : self.validation_end].T
         Y_validation = validation_data[0]
         X_validation = validation_data[1 : n]
         X_validation = X_validation / 255.
         print("Validation Data Loaded.")
 
         # set up training data to be sameples training start - last training example
-        training_data = data[MNIST_Regression.training_start : m].T
+        training_data = self.data[self.training_start : m].T
         Y_training = training_data[0]
         X_training = training_data[1 : n]
         X_training = X_training / 255.
@@ -288,8 +304,8 @@ class MNIST_Regression:
     # Updates the weights and biases of the neural network based upon the weight and bias nudges calculated in back propogation
     def update_parameters(self, weights, weight_nudges, biases, bias_nudges):
         for i in range(len(weights)):
-            weights[i] = weights[i] - MNIST_Regression.learning_ratio * weight_nudges[i]
-            biases[i] = biases[i] - MNIST_Regression.learning_ratio * bias_nudges[i]
+            weights[i] = weights[i] - self.learning_ratio * weight_nudges[i]
+            biases[i] = biases[i] - self.learning_ratio * bias_nudges[i]
         return weights, biases
 
     
@@ -316,15 +332,15 @@ class MNIST_Regression:
         ax[0 , 0].plot(epochs, training_accuracy_scores, label = 'Training Accuracy', c = 'b')
         ax[0 , 0].plot(epochs, validation_accuracy_scores, label = 'Validation Accuracy', c = 'r')
         ax[0 , 0].set_ylim(0, 100)
-        ax[0 , 0].set_xlim(0, MNIST_Regression.num_epochs)
+        ax[0 , 0].set_xlim(0, self.num_epochs)
         ax[0 , 0].xaxis.set_major_locator(MultipleLocator(100))
         ax[0 , 0].yaxis.set_major_locator(MultipleLocator(10))
         ax[0 , 0].set_title('Neural Network Accuracy:')
         ax[0 , 0].set_xlabel('Epochs')
         ax[0 , 0].set_ylabel('Accuracy')
-        ax[0 , 0].text(0, 12, f'Neurons / Layer: L1: {MNIST_Regression.layer_0_size}, L2: {MNIST_Regression.layer_1_size}, L3: {MNIST_Regression.layer_2_size}, L4: {MNIST_Regression.layer_3_size} ', fontsize = 8)
-        ax[0 , 0].text(0, 7, f'Learning Ratio: {MNIST_Regression.learning_ratio}', fontsize = 8)
-        ax[0 , 0].text(0, 2, (f'Val Data Size: {MNIST_Regression.validation_end}, Train Data Size: {m - MNIST_Regression.training_start}'), fontsize = 8)
+        ax[0 , 0].text(0.001, 12, f'Neurons/Layer: L1: {self.layer_0_size}, L2: {self.layer_1_size}, L3: {self.layer_2_size}, L4: {self.layer_3_size} ', fontsize = 8)
+        ax[0 , 0].text(0.001, 7, f'Learning Ratio: {self.learning_ratio}', fontsize = 8)
+        ax[0 , 0].text(0.001, 2, (f'Val Data Size: {self.validation_end}, Train Data Size: {m - self.training_start}'), fontsize = 8)
         ax[0 , 0].legend()
 
 
