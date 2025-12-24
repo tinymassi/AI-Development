@@ -41,16 +41,17 @@ class MNIST_Regression:
 
 
     # Initializes the MNIST_Regression class
-    def __init__(self, learning_ratio=0.1, validation_end=10000, training_start=10000, hidden_layers=[18, 18], num_epochs=500, epoch_step=10):
+    def __init__(self, learning_ratio=0.1, validation_end=10000, training_start=10000, hidden_layers=[16, 16], num_epochs=500, epoch_step=10, display_graphs=True):
 
+        # FETCH DATA
         self.datafile = pd.read_csv(self.datafile_name)
         self.data = np.array(self.datafile)
-        m = self.data.shape[0]            
+        self.m = self.data.shape[0]
 
         # ADD ASSERTS HERE
         assert learning_ratio > 0, "Learning ratio must be non-negative. Pick a value between 0.1 - 3."
         assert validation_end <= training_start, "Validation end value must be less than or equal to the start value for the training data."
-        assert validation_end > 0 and training_start > 0 and validation_end < m and training_start < m, f"Validation end value and training start value must be > 0 and less than the number of labeled images ({m})."
+        assert validation_end > 0 and training_start > 0 and validation_end < self.m and training_start < self.m, f"Validation end value and training start value must be > 0 and less than the number of labeled images ({self.m})."
         assert len(hidden_layers) == 2, "Number of hidden layers must be equal to 2 since this network is only designed with 2 hidden layers in mind."
         assert hidden_layers[0] > 1 and hidden_layers[1] > 1, "Number of neurons in each hidden layer cannot be less than or equal to 1."
         assert num_epochs > 0, "Number of training epochs must be greater than 0."
@@ -62,6 +63,10 @@ class MNIST_Regression:
         
         # Ratio for the rate at which the model learns
         self.num_epochs = num_epochs
+
+        self.display_graphs = display_graphs
+
+        _, self.optimized_weights, self.optimized_biases, _ = self.init_neural_net(self.m)
 
         # Data samples used for validation (0 -> validation_end)
         self.validation_end = validation_end
@@ -84,6 +89,24 @@ class MNIST_Regression:
         self.gradient_descent(X_validation, Y_validation, X_training, Y_training, self.num_epochs)
 
 
+    def read_number(self, hand_drawn_digit):
+
+        assert hand_drawn_digit.shape[0] == 784 and hand_drawn_digit.shape[1] == 1, 'Incorrect data dimensions. Make sure its shape = (784, 1).'
+
+        # Create matrices for each layer of the Neural Network
+        A_0 = np.zeros((self.layer_0_size, 1))
+        A_1 = np.zeros((self.layer_1_size, 1))
+        A_2 = np.zeros((self.layer_2_size, 1))
+        A_3 = np.zeros((self.layer_3_size, 1))
+
+        # List of all the activation layers
+        activations = [A_0, A_1, A_2, A_3]
+        _,_,_, weighted_sums = self.init_neural_net(1)
+        activations, balls = self.forward_propogration(hand_drawn_digit, activations, self.optimized_weights, weighted_sums, self.optimized_biases)
+        prediction = self.get_predictions(activations[-1])
+
+        return prediction[0]
+    
 
     # Gradient descent function runs forward propogation, back propogation and updates the parameters (weights and biases) of the network
     def gradient_descent(self, X_val, Y_val, X_train, Y_train, epochs):
@@ -104,7 +127,7 @@ class MNIST_Regression:
             weights, biases = self.update_parameters(weights, weight_nudges, biases, bias_nudges)
             
 
-            training_predictions, training_actual, training_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_train)
+            training_predictions, training_actual, training_accuracy = self.get_accuracy(self.get_predictions(activations[-1]), Y_train)
             training_accuracy = training_accuracy * 100
             if i % self.epoch_step == 0:
                 print(f"EPOCH: {i} / {self.num_epochs}")
@@ -115,7 +138,7 @@ class MNIST_Regression:
 
 
             validation_activations, validation_weighted_sums = self.forward_propogration(X_val, activations, weights, weighted_sums, biases)
-            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(activations[len(activations) - 1]), Y_val)
+            validation_predictions, validation_actual, validation_accuracy = self.get_accuracy(self.get_predictions(activations[-1]), Y_val)
             validation_accuracy = validation_accuracy * 100 
 
 
@@ -123,9 +146,13 @@ class MNIST_Regression:
             training_accuracy_scores.append(training_accuracy)
             validation_accuracy_scores.append(validation_accuracy)
 
+        self.optimized_weights = weights
+        self.optimized_biases = biases
+
         print("")    
         print('Training and validation done!')
-        self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations, m)
+        if self.display_graphs:
+            self.plot(validation_accuracy_scores, training_accuracy_scores, indexes, X_val, Y_val, validation_activations, m)
 
 
 
@@ -235,6 +262,7 @@ class MNIST_Regression:
                 activation_layers[i + 1] = self.softmax(weighted_sums[i])
             else:
                 activation_layers[i + 1] = self.sigmoid(weighted_sums[i])
+            
 
         return activation_layers, weighted_sums
 
@@ -279,7 +307,7 @@ class MNIST_Regression:
         i = len(weighted_sum_changes) - 1
         while i >= 0:
             if i == len(weighted_sum_changes) - 1:
-                weighted_sum_changes[i] = activation_layers[len(activation_layers) - 1] - one_hot_Y
+                weighted_sum_changes[i] = activation_layers[-1] - one_hot_Y
             else:
                 weighted_sum_changes[i] = np.dot(weights[i + 1].T, weighted_sum_changes[i + 1]) * self.deriv_sigmoid(weighted_sums[i])
 
