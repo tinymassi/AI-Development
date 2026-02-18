@@ -9,7 +9,6 @@ For this program to work, you must install the following:
 - Numpy
 
 To run the program, simply download the following files:
-
 1. MNIST_Regression.py
 2. main.py
 
