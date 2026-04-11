@@ -17,4 +17,4 @@ The MNIST_Regression.py program contains the entire Neural Architecture, which i
 Heres the documentation for object instantiation:
 AI_model = MNIST_Regression(self, learning_ratio=0.1, validation_end=10000, training_start=10000, hidden_layers=[18, 18], num_epochs=500, epoch_step=10);
 
-If you have any questions, email massimoginella12@gmail.com.
+If you have any questions, email massimoginella12@berkeley.edu
